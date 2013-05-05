@@ -1,5 +1,5 @@
 <ModuleDefinition
-   ModuleId="Attacking"
+   ModuleId="Damage"
    VersionId="1"
    ScriptFile="main.cs"
    CreateFunction="create"
