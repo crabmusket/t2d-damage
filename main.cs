@@ -31,18 +31,33 @@ function Damage::createAttackEffect(%this, %name) {
    %bt = new BehaviorTemplate(%name);
    %bt.damageEffectClass = "AttackEffectBehavior";
    Damage.Effects.add(%bt);
+   return %bt;
 }
 
 function Damage::createDefendEffect(%this, %name) {
    %bt = new BehaviorTemplate(%name);
    %bt.damageEffectClass = "DefendEffectBehavior";
    Damage.Effects.add(%bt);
+   return %bt;
 }
 
 function Damage::effect(%this, %obj, %effect) {
    %bi = %effect.createInstance();
    %bi.superClass = %effect.damageEffectClass;
    %obj.addBehavior(%bi);
+}
+
+function Damage::everythingAttackedNear(%this, %attacker, %radius, %damage) {
+   %defenders = %attacker.getScene().pickCircle(
+      %attacker.getPosition(),
+      %radius,
+      "", "",
+      Collision);
+   for(%i = 0; %i < %defenders.count; %i++) {
+      %defender = getWord(%defenders, %i);
+      if(%defender == %attacker) continue;
+      %this.damage(%attacker, %defender, %damage);
+   }
 }
 
 function Damage::damage(%this, %attacker, %defender, %dam) {
@@ -57,7 +72,7 @@ function Damage::damage(%this, %attacker, %defender, %dam) {
    %mul = 1;
    %extra = 0;
 
-   if(getWordCount(%dam) == 1 && strchr(%dam, ":") == "") {
+   if(getWordCount(%dam) == 1 && strchr(%dam, ":") $= "") {
       %amount = %dam;
    } else {
       // Parse options.
@@ -79,15 +94,24 @@ function Damage::damage(%this, %attacker, %defender, %dam) {
    %bs = %attackB SPC %defendB;
 
    // Get damage types from the behaviors.
-   foreach$(%b in %bs) { %types = %types SPC %b.getDamageType(%attacker, %defender); }
+   for(%i = 0; %i < %bs.count; %i++) {
+      %b = getWord(%bs, %i);
+      %types = %types SPC %b.getDamageType(%attacker, %defender);
+   }
    // Get damage modifiers and extra given the type.
-   foreach$(%b in %bs) { %mul *= %b.getDamageMod(%attacker, %defender, %types); %extra += %b.getExtraDamage(%attacker, %defender, %types); }
+   for(%i = 0; %i < %bs.count; %i++) {
+      %b = getWord(%bs, %i);
+      %mul *= %b.getDamageMod(%attacker, %defender, %types); %extra += %b.getExtraDamage(%attacker, %defender, %types);
+   }
 
    // Apply damage multiplier and extra damage.
    %amount = %amount * %mul + %extra;
 
    // Get impulse.
-   foreach$(%b in %bs) { %impulse = vectorAdd(%impulse, %b.getImpulse(%attacker, %defender, %types, %amount)); }
+   for(%i = 0; %i < %bs.count; %i++) {
+      %b = getWord(%bs, %i);
+      %impulse = vectorAdd(%impulse, %b.getImpulse(%attacker, %defender, %types, %amount));
+   }
 
    // Apply the damage.
    %defender.damage += %amount;
@@ -95,7 +119,10 @@ function Damage::damage(%this, %attacker, %defender, %dam) {
    %defender.applyImpulse(%impulse, %defender.getPosition());
 
    // Let everyone know about the results.
-   foreach$(%b in %bs) { %b.onDamage(%attacker, %defender, %types, %amount, %impulse); }
+   for(%i = 0; %i < %bs.count; %i++) {
+      %b = getWord(%bs, %i);
+      %b.onDamage(%attacker, %defender, %types, %amount, %impulse);
+   }
    // Let the object do custom stuff.
    %defender.onDamage(%attacker, %types, %amount, %impulse);
 }

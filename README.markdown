@@ -75,9 +75,9 @@ You can initiate an _attack_ using the appropriate method:
 
 Again, `%damage` can be a number or an option string.
 There are also some convenience methods that allow you deal damage in common patterns to one or multiple defenders.
-All the `everything` methods can be used with an `attack` prefix, like:
+All the `everything` methods can be used with an `attack` in the middle, like:
 
-    Damage.attackEverythingNear(%attacker, %range, %damage);
+    Damage.everythingAttackedNear(%attacker, %range, %damage);
 
 Some common patterns with direction:
 
