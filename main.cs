@@ -46,6 +46,10 @@ function Damage::effect(%this, %obj, %effect) {
 }
 
 function Damage::damage(%this, %attacker, %defender, %dam) {
+   if(!%defender.isDamageEnabled) {
+      return;
+   }
+
    // Parameters that will be filled in later.
    %types = "";
    %amount = 0;
