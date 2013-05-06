@@ -94,7 +94,7 @@ function Damage::damage(%this, %attacker, %defender, %dam) {
          %defendB = %defendB SPC %defender.getBehaviorByIndex(%i);
       }
    }
-   %bs = trim(%attackB SPC %defendB);
+   %bs = trim(%attackB @ %defendB);
 
    // Get damage types from the behaviors.
    for(%i = 0; %i < getWordCount(%bs); %i++) {
