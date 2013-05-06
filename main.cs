@@ -56,31 +56,27 @@ function Damage::everythingAttackedNear(%this, %attacker, %radius, %damage) {
       %radius,
       "", "",
       Collision);
-   for(%i = 0; %i < %defenders.count; %i++) {
+   for(%i = 0; %i < getWordCount(%defenders); %i++) {
       %defender = getWord(%defenders, %i);
       if(%defender == %attacker) continue;
-      %this.damage(%attacker, %defender, %damage);
+      Damage.attack(%attacker, %defender, %damage);
    }
 }
 
-function Damage::damage(%this, %attacker, %defender, %dam) {
-   if(!%defender.isDamageEnabled) {
-      return;
+function Damage::just(%this, %defender, %dam) {
+   %bs = "";
+   for(%i = 0; %i < %defender.getBehaviorCount(); %i++) {
+      if(%defender.getBehaviorByIndex(%i).superClass $= "DefendEffectBehavior") {
+         %bs = %bs SPC %defender.getBehaviorByIndex(%i);
+      }
    }
 
-   // Parameters that will be filled in later.
-   %types = "";
-   %amount = 0;
-   %impulse = "0 0";
-   %mul = 1;
-   %extra = 0;
+   %result = %this._damage("", %defender, %dam, %bs);
 
-   if(getWordCount(%dam) == 1 && strchr(%dam, ":") $= "") {
-      %amount = %dam;
-   } else {
-      // Parse options.
-   }
+   %defender.onDamaged(%attacker, getWord(%result, 0), getWord(%result, 1), getWords(%result, 2, 3));
+}
 
+function Damage::attack(%this, %attacker, %defender, %dam) {
    // Get attack and defence behaviors.
    %attackB = "";
    for(%i = 0; %i < %attacker.getBehaviorCount(); %i++) {
@@ -95,6 +91,31 @@ function Damage::damage(%this, %attacker, %defender, %dam) {
       }
    }
    %bs = trim(%attackB @ %defendB);
+
+   %result = %this._damage(%attacker, %defender, %dam, %bs);
+
+   // Let everyone know about the results.
+   %attacker.onDamage(%defender, getWords(%result, 3), getWord(%result, 0), getWords(%result, 1, 2));
+   %defender.onDamaged(%attacker, getWords(%result, 3), getWord(%result, 0), getWords(%result, 1, 2));
+}
+
+function Damage::_damage(%this, %attacker, %defender, %damage, %bs) {
+   if(!%defender.isDamageEnabled) {
+      return 0 SPC "" SPC "0 0";
+   }
+
+   // Parameters that will be filled in later.
+   %types = "";
+   %amount = 0;
+   %impulse = "0 0";
+   %mul = 1;
+   %extra = 0;
+
+   if(getWordCount(%damage) == 1 && strchr(%damage, ":") $= "") {
+      %amount = %damage;
+   } else {
+      // Parse options.
+   }
 
    // Get damage types from the behaviors.
    for(%i = 0; %i < getWordCount(%bs); %i++) {
@@ -121,9 +142,7 @@ function Damage::damage(%this, %attacker, %defender, %dam) {
    // Apply the impulse.
    //%defender.applyImpulse(%impulse, %defender.getPosition());
 
-   // Let everyone know about the results.
-   %attacker.onDamage(%defender, %types, %amount, %impulse);
-   %defender.onDamaged(%attacker, %types, %amount, %impulse);
+   return %amount SPC %impulse SPC %types;
 }
 
 function DamageEffectBehavior::onBehaviorAdd(%this) {
