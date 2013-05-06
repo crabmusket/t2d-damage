@@ -50,6 +50,18 @@ function Damage::effect(%this, %obj, %effect) {
    %obj.addBehavior(%bi);
 }
 
+function Damage::everythingNear(%this, %obj, %radius, %damage) {
+   %defenders = %attacker.getScene().pickCircle(
+      %attacker.getPosition(),
+      %radius,
+      "", "",
+      Collision);
+   for(%i = 0; %i < getWordCount(%defenders); %i++) {
+      %defender = getWord(%defenders, %i);
+      Damage.just(%defender, %damage);
+   }
+}
+
 function Damage::everythingAttackedNear(%this, %attacker, %radius, %damage) {
    %defenders = %attacker.getScene().pickCircle(
       %attacker.getPosition(),
